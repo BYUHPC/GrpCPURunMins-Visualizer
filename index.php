@@ -218,6 +218,7 @@ $content = ob_get_clean();
 echo $template
     ->title('Walltime Simulation')
     ->addStylesheet("/css/".get_current_template()."/simulation/simulationGraph.css")
+    ->addStylesheet("/css/".get_current_template()."/simulation/print.css")
     ->appendBreadcrumbs(array(
         array('text'=>'Simulation', 'url'=>'/simulation/')
     ))->assignContent($content)
