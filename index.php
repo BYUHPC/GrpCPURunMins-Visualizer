@@ -57,26 +57,6 @@ var svg = d3.select("div#graph").append("svg")
      .attr("height", height + margin.top + margin.bottom)
    .append("g")
      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
-svg.append("g")
-     .attr("class", "x axis")
-     .attr("transform", "translate(0," + height + ")")
-     .call(xAxis)
-   .append("text")
-     .attr("dx", ".71em")
-     .style("text-anchor", "start")
-     .attr("y", -6)
-     .text("Hours");
-
-svg.append("g")
-     .attr("class", "y axis")
-     .call(yAxis)
-   .append("text")
-     .attr("transform", "rotate(-90)")
-     .attr("y", 6)
-     .attr("dy", ".71em")
-     .style("text-anchor", "end")
-     .text("Cores");
 
 var current_id = 0;
 var plus_template = '<span class="inc button">+</span>';
@@ -103,6 +83,7 @@ function removeForm() {
         return;
     }
     $("#simulation"+(--current_id)).remove();
+    svg.select
     addFormButtons(current_id-1);
 }
 
@@ -151,10 +132,6 @@ function sendAjax(form, id){
                 return d3.max(line);
             })]);
         redrawTicks();
-        svg.selectAll("g.x.axis")
-             .call(xAxis);
-        svg.selectAll("g.y.axis")
-             .call(yAxis);
         // need to remove them all and redraw them with the new scale
         svg.selectAll("path.line")
              .remove();
@@ -169,23 +146,30 @@ function sendAjax(form, id){
         }
     });
 }
-
      
 function redrawTicks() {
-//    svg.selectAll("g.grid.path").remove();
-//    svg.append("g")         
-//        .attr("class", "grid")
-//        .attr("transform", "translate(0," + height + ")")
-//        .call(xAxis.ticks(16)
-//            .tickSize(-height, 0, 0)
-//            .tickFormat("")
-//        );
-//    svg.append("g")         
-//        .attr("class", "grid")
-//        .call(yAxis.ticks(16)
-//            .tickSize(-width, 0, 0)
-//            .tickFormat("")
-//        );
+    svg.selectAll("g.x.axis").remove();
+    svg.selectAll("g.y.axis").remove();
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis.ticks(10)
+            .tickSize(-height, 0, 0)
+        ).append("text")
+            .attr("dx", ".71em")
+            .style("text-anchor", "start")
+            .attr("y", -6)
+            .text("Hours");
+    svg.append("g")         
+        .attr("class", "y axis")
+        .call(yAxis.ticks(10)
+            .tickSize(-width, 0, 0)
+        ).append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end")
+            .text("Cores");
 }
 
 // parse any query string params and if they are all there then we can fill in the
