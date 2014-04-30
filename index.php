@@ -27,7 +27,7 @@ ob_start();
   <p><img src="/css/nova/simulation/ajax-loader.gif" /> Please Wait</p>
 </div>
 
-<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3.js" charset="utf-8"></script>
 <script>
 
 var margin = {top: 20, right: 20, bottom: 30, left: 100},
@@ -130,7 +130,7 @@ function sendAjax(form, id){
     // TODO: Cache the results for previous histories
     
     $('#loading').show();
-    d3.json("http://localhost/simulation/simulation.php?"+$(form).serialize(), function(error, data) {
+    d3.json("/simulation/simulation.php?"+$(form).serialize(), function(error, data) {
         $('#loading').hide();
         if (error) {
             // TODO display an error message
