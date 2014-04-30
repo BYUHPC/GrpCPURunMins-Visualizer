@@ -189,8 +189,15 @@ var urlParams;
 $(function(){
     redrawTicks();
     addForm();
-    if (urlParams && urlParams[""]) {
-        // TODO fill in the form and call the ajax with the data
+    // verify that all the url params both exist and they are all numbers
+    console.log(urlParams);
+    if (urlParams && urlParams["hours"] && urlParams["cores"] && urlParams["jobs"] && urlParams["gcrmins"]
+             && parseInt(urlParams["hours"]) && parseInt(urlParams["cores"]) && parseInt(urlParams["jobs"]) && parseInt(urlParams["gcrmins"])) {
+        document.forms["simulation0"].hours.value = parseInt(urlParams["hours"]);
+        document.forms["simulation0"].cores.value = parseInt(urlParams["cores"]);
+        document.forms["simulation0"].jobs.value = parseInt(urlParams["jobs"]);
+        document.forms["simulation0"].gcrmins.value = parseInt(urlParams["gcrmins"]);
+        sendAjax("#simulation0", 0);
     }
 });
 </script>
