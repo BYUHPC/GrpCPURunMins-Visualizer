@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SLURM GrpCpuRunMins Simulation</title>
+</head>
+
+<body>
+  <script src="./simulation.js"></script>
+  <script>
+    var simulation = new Fsl.CpuTimeRemaining.Simulation(72, 16, 288000);
+    for (var n = simulation.next(); !n.done; n = simulation.next()) {
+      console.log(n.value);
+    }
+  </script>
+</body>
+</html>
