@@ -1,0 +1,70 @@
+.axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.axis line {
+  fill: none;
+  stroke: lightgrey;
+  shape-rendering: crispEdges;
+  opacity: 0.7;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1.5px;
+}
+
+.red {
+  stroke: red;
+}
+
+.blue {
+  stroke: steelblue;
+}
+
+.green {
+  stroke: green;
+}
+
+form.base_form {
+  border: 1px solid;
+  border-radius: 5px;
+  padding: 5px;
+  margin-left: 5px;
+  display: inline-block;
+}
+
+form.red {
+  border-color: red;
+}
+form.blue {
+  border-color: steelblue;
+}
+form.green {
+  border-color: green;
+}
+
+
+.loading-spinner {
+  display: none; 
+  position: relative;
+  top: -330px;
+  left: 450px;
+  width: 150px;
+}
+
+.button {
+  margin-right: 5px;
+  padding-bottom: 0px;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+  text-align: center;
+  border: 1px solid;
+  border-radius: 5px;
+}
+
+label.simulation {width:310px; height: 30px; display:block;}
+input.simulation {float:right; clear:both;}

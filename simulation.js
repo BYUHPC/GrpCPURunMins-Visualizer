@@ -12,6 +12,11 @@ Fsl.CpuTimeRemaining.Job = function(walltime, cores) {
   this.cpu_time = cores * walltime;
 };
 
+Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run = function(walltime, cores, GRPCpuRunHrs) {
+  var MAGIC_CONSTANT = 5; 
+  return GRPCpuRunHrs / (walltime / 2 ) / cores * MAGIC_CONSTANT;
+};
+
 /**
  * This class implements the ECMAScript 6 protocol for iterators, as 
  * documented by MDN: 
@@ -21,7 +26,7 @@ Fsl.CpuTimeRemaining.Job = function(walltime, cores) {
  * browsers, so instead of using the for..of syntax of ES6 you need to 
  * manually iterate by calling .next()
  */
-Fsl.CpuTimeRemaining.Simulation = function(walltime, cores, GRPCpuRunHrs) {
+Fsl.CpuTimeRemaining.Simulation = function(walltime, cores, jobs, GRPCpuRunHrs) {
 //public API:
   this.next = function() {
     var time_remaining = this.update_running_jobs_and_sum_time_remaining();
@@ -33,17 +38,11 @@ Fsl.CpuTimeRemaining.Simulation = function(walltime, cores, GRPCpuRunHrs) {
     };
   };
 
-
 //private API:
   this.jobs = [];
   this.job = new Fsl.CpuTimeRemaining.Job(walltime, cores);
   this.run_ndx = 0;
   this.queue_ndx = 0;
-
-  this.calculate_number_of_jobs_to_run = function() {
-    var MAGIC_CONSTANT = 5; 
-    return GRPCpuRunHrs / (walltime / 2 ) / cores * MAGIC_CONSTANT;
-  };
 
   this.update_running_jobs_and_sum_time_remaining = function() {
     var sum = 0;
@@ -91,7 +90,7 @@ Fsl.CpuTimeRemaining.Simulation = function(walltime, cores, GRPCpuRunHrs) {
     return this.run_ndx < this.jobs.length;
   };
 
-  for (var i = 0; i < this.calculate_number_of_jobs_to_run(); ++i) {
+  for (var i = 0; i < jobs; ++i) {
     this.jobs.push(this.job.cpu_time);
   }
 

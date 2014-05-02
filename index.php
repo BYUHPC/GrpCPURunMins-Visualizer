@@ -8,13 +8,13 @@ ob_start();
 ?>
 
 <div id="form-template" style="display: none;">
-<form style="display: inline-block;" id="simulation{{id}}" onsubmit="javascript:sendAjax(this, {{id}}); return false;"> 
+<form class="base_form" id="simulation{{id}}" onsubmit="javascript:sendAjax(this, {{id}}); return false;"> 
     <fieldset>
         <legend>Simulation Parameters #{{id}}</legend>
-        <label for="hours" class="simulation">Hours <input name="hours" size="5" type="text" class="simulation"></label> 
-        <label for="cores" class="simulation">Cores <input name="cores" size="5" type="text" class="simulation"></label>
-        <label for="jobs" class="simulation">Jobs <input name="jobs" size="5" type="text" class="simulation"></label> 
-        <label for="gcrmins" class="simulation">Group CPU Run Mins <input name="gcrmins" size="5" type="text" class="simulation"></label>
+        <label for="hours" class="simulation">Job Walltime (hours) <input name="hours" size="8" type="text" class="simulation"></label> 
+        <label for="cores" class="simulation">Cores Per Job <input name="cores" size="8" type="text" class="simulation"></label>
+        <label for="gcrmins" class="simulation">Group CPU Run Mins <input name="gcrmins" size="8" type="text" class="simulation"></label>
+        <label for="jobs" class="simulation">Jobs <input name="jobs" size="8" type="text" class="simulation"></label> 
     </fieldset>
     <input type="submit" value="Update Chart">
     <div>Compare Plots <span id="formadd{{id}}"></span></div>
@@ -96,6 +96,7 @@ function addForm() {
     // for some stupid reason, I can't use replace on the htmlString. Instead
     // I have to do the split join trick to get it to work
     $("#formset").append($('#form-template').html().split("{{id}}").join(current_id));
+    $("#simulation"+current_id).addClass(chart_colors_class[current_id]);
     // remove the buttons from the previous form if any
     if (current_id !== 0) {
         $("#formadd"+(current_id-1)).empty();
