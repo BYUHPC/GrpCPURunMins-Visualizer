@@ -63,6 +63,7 @@ var svg = d3.select("div#graph").append("svg")
 var current_id = 0;
 var plus_template = '<span class="inc button">+</span>';
 var minus_template = '<span class="dec button">-</span>';
+
 // want more comparisons? add more colors to this spot
 var chart_colors_class = ["blue", "red", "green"];
 var max_forms = chart_colors_class.length;
@@ -205,13 +206,19 @@ var urlParams;
     addForm();
     // verify that all the url params both exist and they are all numbers
     console.log(urlParams);
-    if (urlParams && urlParams["JobWalltimeHours"] && urlParams["JobCores"] && urlParams["jobs"] && urlParams["GrpCPURunMins"]
-             && parseInt(urlParams["hours"]) && parseInt(urlParams["JobCores"]) && parseInt(urlParams["jobs"]) && parseInt(urlParams["GrpCPURunMins"])) {
-        document.forms["simulation0"].hours.value = parseInt(urlParams["hours"]);
-        document.forms["simulation0"].JobCores.value = parseInt(urlParams["JobCores"]);
-        document.forms["simulation0"].jobs.value = parseInt(urlParams["jobs"]);
-        document.forms["simulation0"].GrpCPURunMins.value = parseInt(urlParams["GrpCPURunMins"]);
-        render("#simulation0", 0);
+    //if (urlParams && urlParams["JobWalltimeHours"] && urlParams["JobCores"] && urlParams["GrpCPURunMins"]) {
+    if (urlParams) {
+        var JobWalltimeHours = parseInt(urlParams["JobWalltimeHours"]) || '';
+        var JobCores = parseInt(urlParams["JobCores"]) || '';
+        var jobs = parseInt(urlParams["jobs"]) || '';
+        var GrpCPURunMins =  parseInt(urlParams["GrpCPURunMins"]) || '';
+
+        var simulation = document.getElementById('simulation0');
+        simulation.JobWalltimeHours.value = JobWalltimeHours;
+        simulation.JobCores.value = JobCores;
+        simulation.jobs.value = jobs;
+        simulation.GrpCPURunMins.value = GrpCPURunMins;
+        render(simulation, 0);
     }
 })();
 </script>
