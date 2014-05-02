@@ -14,9 +14,9 @@
 <form class="base_form" id="simulation{{id}}"> 
     <fieldset>
         <legend>Simulation Parameters #{{id}}</legend>
-        <label for="hours" class="simulation">Job Walltime (hours) <input name="hours" size="8" type="text" class="simulation"></label> 
-        <label for="cores" class="simulation">Cores Per Job <input name="cores" size="8" type="text" class="simulation"></label>
-        <label for="gcrmins" class="simulation">Group CPU Run Mins <input name="gcrmins" size="8" type="text" class="simulation"></label>
+        <label for="JobWalltimeHours" class="simulation">Job Walltime (hours) <input name="JobWalltimeHours" size="8" type="text" class="simulation"></label> 
+        <label for="JobCores" class="simulation">Cores Per Job <input name="JobCores" size="8" type="text" class="simulation"></label>
+        <label for="GrpCPURunMins" class="simulation">Group CPU Run Mins <input name="GrpCPURunMins" size="8" type="text" class="simulation"></label>
         <label for="jobs" class="simulation">Jobs <input name="jobs" size="8" type="text" class="simulation"></label> 
     </fieldset>
     <input type="submit" name="submit" value="Update Chart">
@@ -84,9 +84,10 @@ function removeForm() {
     if (current_id === 0) {
         return;
     }
-    $("#simulation"+(--current_id)).remove();
-    svg.select
+    line_data[--current_id] = [];
+    $("#simulation"+(current_id)).remove();
     addFormButtons(current_id-1);
+    redraw();
 }
 
 function addForm() {
@@ -95,14 +96,16 @@ function addForm() {
     if (current_id === max_forms) {
         return;
     }
+
     // for some stupid reason, I can't use replace on the htmlString. Instead
     // I have to do the split join trick to get it to work
     $("#formset").append($('#form-template').html().split("{{id}}").join(current_id));
     $("#simulation"+current_id).addClass(chart_colors_class[current_id]);
     var id = current_id;
-    $("#simulation"+current_id).submit(function(event){
-        sendAjax("#simulation"+id, id);
+    var simulation = document.getElementById('simulation' + id);
+    simulation.addEventListener('submit', function(event) {
         event.preventDefault();
+        render(simulation, id);
     });
     // remove the buttons from the previous form if any
     if (current_id !== 0) {
@@ -114,55 +117,48 @@ function addForm() {
 
 var history_cache = {};
 var line_data = new Array(max_forms);
-function sendAjax(form, id){
+for (var i = 0; i < max_forms; i++) {
+  line_data[i] = [];
+}
+function render(form, id) {
     // TODO: Hide the jobs field and compute it unless they check the advanced buttons
     // TODO: Cache the results for previous histories
     
-    $('#loading').show();
-//    d3.json("/simulation/simulation.php?"+$(form).serialize(), function(error, data) {
+    //$('#loading').show();
     var data = [];
-    var walltime = $(form).find('input[name="hours"]').val();
-    var cores = $(form).find('input[name="cores"]').val();
-    var GRPCpuRunHrs = $(form).find('input[name="gcrmins"]').val();
-    var jobs = Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run(walltime, cores, GRPCpuRunHrs);
-    var simulation = new Fsl.CpuTimeRemaining.Simulation(walltime, cores, jobs, GRPCpuRunHrs);
+    var JobWalltime = form.JobWalltimeHours.value;
+    var JobCores = form.JobCores.value;
+    var GrpCPURunHrs = form.GrpCPURunMins.value;
+    var jobs = Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run(JobWalltime, JobCores, GrpCPURunHrs);
+    var simulation = new Fsl.CpuTimeRemaining.Simulation(JobWalltime, JobCores, jobs, GrpCPURunHrs);
     for (var n = simulation.next(); !n.done; n = simulation.next()) {
       data.push(n.value);
     }
-    console.log(walltime + " " + cores + " " + GRPCpuRunHrs + " " +data);
-    $('#loading').hide();
-//    if (error) {
-//        // TODO display an error message
-//        return;
-//    }
+    //console.log(JobWalltime + " " + JobCores + " " + GrpCPURunHrs + " " +data);
+    //$('#loading').hide();
     line_data[id] = data;
+    redraw();
+}
+function redraw() {
     // determine the x and y min max by finding the biggest x and biggest y in all the lines
-    x.domain([0, d3.max(line_data, function(line){
-            if (!line) {
-                return NaN; 
-            }
+    var x_max = d3.max(line_data, function(line) {
             return line.length-1;
-        })]);
-    y.domain([0, d3.max(line_data, function(line){
-            if (!line){
-                return NaN;
-            }
+        });
+    x.domain([0, x_max]);
+    var y_max = d3.max(line_data, function(line) {
             return d3.max(line);
-        })]);
+        });
+    y.domain([0, y_max]);
     redrawTicks();
     // need to remove them all and redraw them with the new scale
     svg.selectAll("path.line")
          .remove();
-    for (i=0; i<current_id; i++) {
-        if (!line_data[i]) {
-            continue;
-        }
+    for (var i = 0; i < current_id; i++) {
         svg.append("path")
              .datum(line_data[i])
              .attr("class", "line " + chart_colors_class[i])
              .attr("d", line);
     }
-//    });
 }
      
 function redrawTicks() {
@@ -204,20 +200,20 @@ var urlParams;
     while (match = search.exec(query))
        urlParams[decode(match[1])] = decode(match[2]);
 })();
-$(function(){
+(function(){
     redrawTicks();
     addForm();
     // verify that all the url params both exist and they are all numbers
     console.log(urlParams);
-    if (urlParams && urlParams["hours"] && urlParams["cores"] && urlParams["jobs"] && urlParams["gcrmins"]
-             && parseInt(urlParams["hours"]) && parseInt(urlParams["cores"]) && parseInt(urlParams["jobs"]) && parseInt(urlParams["gcrmins"])) {
+    if (urlParams && urlParams["JobWalltimeHours"] && urlParams["JobCores"] && urlParams["jobs"] && urlParams["GrpCPURunMins"]
+             && parseInt(urlParams["hours"]) && parseInt(urlParams["JobCores"]) && parseInt(urlParams["jobs"]) && parseInt(urlParams["GrpCPURunMins"])) {
         document.forms["simulation0"].hours.value = parseInt(urlParams["hours"]);
-        document.forms["simulation0"].cores.value = parseInt(urlParams["cores"]);
+        document.forms["simulation0"].JobCores.value = parseInt(urlParams["JobCores"]);
         document.forms["simulation0"].jobs.value = parseInt(urlParams["jobs"]);
-        document.forms["simulation0"].gcrmins.value = parseInt(urlParams["gcrmins"]);
-        sendAjax("#simulation0", 0);
+        document.forms["simulation0"].GrpCPURunMins.value = parseInt(urlParams["GrpCPURunMins"]);
+        render("#simulation0", 0);
     }
-});
+})();
 </script>
 </body>
 </html>
