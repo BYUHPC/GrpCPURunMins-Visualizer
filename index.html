@@ -7,24 +7,10 @@
 
 <body>
   <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
   <script src="./simulation.js"></script>
   
-<div id="form-template" style="display: none;">
-<form class="base_form" id="simulation{{id}}"> 
-    <fieldset>
-        <legend>Simulation Parameters #{{id}}</legend>
-        <label for="JobWalltimeHours" class="simulation">Job Walltime (hours) <input name="JobWalltimeHours" size="8" type="text" class="simulation"></label> 
-        <label for="JobCores" class="simulation">Cores Per Job <input name="JobCores" size="8" type="text" class="simulation"></label>
-        <label for="GrpCPURunMins" class="simulation">Group CPU Run Mins <input name="GrpCPURunMins" size="8" type="text" class="simulation"></label>
-        <label for="jobs" class="simulation">Jobs <input name="jobs" size="8" type="text" class="simulation"></label> 
-    </fieldset>
-    <input type="submit" name="submit" value="Update Chart">
-    <div>Compare Plots <span id="formadd{{id}}"></span></div>
-</form>
-</div>
-
 <div id="formset" class="formset"></div>
+
 <div id="graph"></div>
 <div id="loading" class="loading-spinner">
   <p><img src="/css/nova/simulation/ajax-loader.gif" /> Please Wait</p>
@@ -60,60 +46,115 @@ var svg = d3.select("div#graph").append("svg")
    .append("g")
      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var current_id = 0;
-var plus_template = '<span class="inc button">+</span>';
-var minus_template = '<span class="dec button">-</span>';
+var next_form_id = 0;
+var inc_button = document.createElement('button');
+inc_button.classList.add('inc');
+inc_button.appendChild(document.createTextNode('+'));
+inc_button.addEventListener('click', addForm);
+
+var dec_button = document.createElement('button');
+dec_button.classList.add('dec');
+dec_button.appendChild(document.createTextNode('-'));
+dec_button.addEventListener('click', removeForm);
 
 // want more comparisons? add more colors to this spot
 var chart_colors_class = ["blue", "red", "green"];
 var max_forms = chart_colors_class.length;
+var max_form_id = max_forms - 1;
 
 function addFormButtons(id) {
-    if (id !== max_forms-1) {
-        $("#formadd"+id).append(plus_template);
+    var formadd = document.getElementById('formadd' + id);
+    if (id < max_form_id) {
+        formadd.appendChild(inc_button);
     }
-    if (id !== 0) {
-        $("#formadd"+id).append(minus_template);
+    if (id > 0) {
+        formadd.appendChild(dec_button);
     }
     // a little wasteful, but it think it is not a big deal
-    $(".dec").click(removeForm);
-    $(".inc").click(addForm);
 }
 
 function removeForm() {
     // can't remove the last form
-    if (current_id === 0) {
+    if (next_form_id === 0) {
         return;
     }
-    line_data[--current_id] = [];
-    $("#simulation"+(current_id)).remove();
-    addFormButtons(current_id-1);
+    line_data[--next_form_id] = [];
+    var simulation = document.getElementById('simulation' + next_form_id);
+    simulation.parentNode.removeChild(simulation);
+    addFormButtons(next_form_id-1);
     redraw();
+}
+
+
+function createInputWithLabel(name, description, required) {
+  var input = document.createElement('input');
+  input.setAttribute('name', name);
+  input.setAttribute('size', 8);
+  input.setAttribute('type', 'text');
+  if (required) {
+    input.setAttribute('required', '');
+  }
+
+  var label = document.createElement('label');
+  label.appendChild(document.createTextNode(description));
+  label.appendChild(input);
+  return label;
+}
+
+function createForm(id, color) {
+  var name = 'simulation' + id;
+  var form = document.createElement('form');
+  form.setAttribute('id', name);
+  form.classList.add(color);
+
+  var fieldset = document.createElement('fieldset');
+  var legend = document.createElement('legend');
+  legend.appendChild(document.createTextNode('Simulation #' + id));
+  fieldset.appendChild(legend);
+  fieldset.appendChild(createInputWithLabel('JobWalltimeHours', 'Job Walltime (hours)', true));
+  fieldset.appendChild(createInputWithLabel('JobCores', 'Cores per job', true));
+  fieldset.appendChild(createInputWithLabel('GrpCPURunMins', 'Group CPU Run Mins', true));
+  fieldset.appendChild(createInputWithLabel('jobs', 'Jobs', false));
+
+  var submit = document.createElement('button');
+  submit.setAttribute('form', name);
+  submit.setAttribute('type', 'submit');
+  submit.appendChild(document.createTextNode('Update Chart'));
+
+  var formadd = document.createElement('span');
+  formadd.setAttribute('id', 'formadd' + id);
+  formadd.classList.add('formadd');
+
+  form.appendChild(fieldset);
+  form.appendChild(submit);
+  form.appendChild(formadd);
+  return form;
 }
 
 function addForm() {
     // can't add more forms than we have colors for just cause I said so :p
     // if you REALLY wanna reuse colors you can just find the add color part and mod it over the length
-    if (current_id === max_forms) {
+    if (next_form_id === max_forms) {
         return;
     }
+    var id = next_form_id;
 
-    // for some stupid reason, I can't use replace on the htmlString. Instead
-    // I have to do the split join trick to get it to work
-    $("#formset").append($('#form-template').html().split("{{id}}").join(current_id));
-    $("#simulation"+current_id).addClass(chart_colors_class[current_id]);
-    var id = current_id;
-    var simulation = document.getElementById('simulation' + id);
+    var simulation = createForm(id, chart_colors_class[id]);
+    var formset = document.getElementById('formset');
+    formset.appendChild(simulation);
     simulation.addEventListener('submit', function(event) {
         event.preventDefault();
         render(simulation, id);
     });
     // remove the buttons from the previous form if any
-    if (current_id !== 0) {
-        $("#formadd"+(current_id-1)).empty();
+    if (next_form_id !== 0) {
+        var formadd = document.getElementById('formadd' + (next_form_id - 1));
+        while (formadd.lastChild) {
+            formadd.removeChild(formadd.lastChild);
+        }
     }
     // add form buttons to the new form
-    addFormButtons(current_id++);
+    addFormButtons(next_form_id++);
 }
 
 var history_cache = {};
@@ -125,7 +166,6 @@ function render(form, id) {
     // TODO: Hide the jobs field and compute it unless they check the advanced buttons
     // TODO: Cache the results for previous histories
     
-    //$('#loading').show();
     var data = [];
     var JobWalltime = form.JobWalltimeHours.value;
     var JobCores = form.JobCores.value;
@@ -136,7 +176,6 @@ function render(form, id) {
       data.push(n.value);
     }
     //console.log(JobWalltime + " " + JobCores + " " + GrpCPURunHrs + " " +data);
-    //$('#loading').hide();
     line_data[id] = data;
     redraw();
 }
@@ -154,7 +193,7 @@ function redraw() {
     // need to remove them all and redraw them with the new scale
     svg.selectAll("path.line")
          .remove();
-    for (var i = 0; i < current_id; i++) {
+    for (var i = 0; i < next_form_id; i++) {
         svg.append("path")
              .datum(line_data[i])
              .attr("class", "line " + chart_colors_class[i])

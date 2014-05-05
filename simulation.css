@@ -27,21 +27,21 @@
   stroke: green;
 }
 
-form.base_form {
+#formset form {
   border: 1px solid;
-  border-radius: 5px;
-  padding: 5px;
-  margin-left: 5px;
+  border-radius: .5rem;
+  padding: .5rem;
+  margin-left: .5rem;
   display: inline-block;
 }
 
-form.red {
+#formset form.red {
   border-color: red;
 }
-form.blue {
+#formset form.blue {
   border-color: steelblue;
 }
-form.green {
+#formset form.green {
   border-color: green;
 }
 
@@ -54,17 +54,17 @@ form.green {
   width: 150px;
 }
 
-.button {
-  margin-right: 5px;
-  padding-bottom: 0px;
-  cursor: pointer;
-  width: 22px;
-  height: 22px;
-  display: inline-block;
-  text-align: center;
-  border: 1px solid;
-  border-radius: 5px;
+#formset button {
+  margin-right: .5rem;
+}
+#formset .formadd {
+  float: right;
+}
+#formset button.inc,
+#formset button.dec {
+  width:3em;
 }
 
-label.simulation {width:310px; height: 30px; display:block;}
-input.simulation {float:right; clear:both;}
+
+#formset label {width:310px; height: 30px; display:block;}
+#formset input {float:right; clear:both;}
