@@ -1,32 +1,3 @@
-.axis path {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-.axis line {
-  fill: none;
-  stroke: lightgrey;
-  shape-rendering: crispEdges;
-  opacity: 0.7;
-}
-
-.line {
-  fill: none;
-  stroke-width: 1.5px;
-}
-
-.red {
-  stroke: red;
-}
-
-.blue {
-  stroke: steelblue;
-}
-
-.green {
-  stroke: green;
-}
-
 form.base_form {
   border: 1px solid;
   border-radius: 5px;

@@ -14,13 +14,14 @@ use Fsl\RemainingCpuTimeSimulation\SimulationFactory;
 //}
 
 //check to see that the GET params are all there and that they are all numeric
-// TODO: calculate jobs if they don't send that in
 if (empty($_GET["hours"]) || empty($_GET["cores"]) || empty($_GET["jobs"]) || empty($_GET["gcrmins"]) || 
     !is_numeric($_GET["hours"]) || !is_numeric($_GET["cores"]) || !is_numeric($_GET["jobs"]) || !is_numeric($_GET["gcrmins"])) {
     
     header('HTTP/1.1 400 Bad Request', true, 400);
     exit();
 }
+
+
 
 $jobWalltime = (int) $_GET["hours"];
 $coresPerJob = (int) $_GET["cores"];

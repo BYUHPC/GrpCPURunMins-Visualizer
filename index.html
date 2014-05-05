@@ -25,11 +25,50 @@
 </div>
 
 <div id="formset" class="formset"></div>
-<div id="graph"></div>
+<div id="graph"><svg xmlns="http://www.w3.org/2000/svg"><defs><style type="text/css">
+    <![CDATA[
+body {
+  background-color: white;
+}
+.axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.axis line {
+  fill: none;
+  stroke: lightgrey;
+  shape-rendering: crispEdges;
+  opacity: 0.7;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1.5px;
+}
+
+.red {
+  stroke: red;
+}
+
+.blue {
+  stroke: steelblue;
+}
+
+.green {
+  stroke: green;
+}
+
+]]>
+</style></defs></svg></div>
 <div id="loading" class="loading-spinner">
   <p><img src="/css/nova/simulation/ajax-loader.gif" /> Please Wait</p>
 </div>
-
+<button id="save">Save 1</button>
+<button id="save8">Save 8</button>
+<button onclick="saveAsImg();">Save 2</button>
+<div id="svgdataurl"></div>
+<div id="pngdataurl"></div>
 <script>
 
 var margin = {top: 20, right: 20, bottom: 30, left: 100},
@@ -54,7 +93,7 @@ var line = d3.svg.line()
     .x(function(d,i) { return x(i); })
     .y(function(d) { return y(d); });
 
-var svg = d3.select("div#graph").append("svg")
+var svg = d3.select("div#graph").select("svg")
      .attr("width", width + margin.left + margin.right)
      .attr("height", height + margin.top + margin.bottom)
    .append("g")
@@ -144,11 +183,11 @@ function redraw() {
     // determine the x and y min max by finding the biggest x and biggest y in all the lines
     var x_max = d3.max(line_data, function(line) {
             return line.length-1;
-        });
+        }) || 1.0;
     x.domain([0, x_max]);
     var y_max = d3.max(line_data, function(line) {
             return d3.max(line);
-        });
+        }) || 1.0;
     y.domain([0, y_max]);
     redrawTicks();
     // need to remove them all and redraw them with the new scale
@@ -205,7 +244,6 @@ var urlParams;
     redrawTicks();
     addForm();
     // verify that all the url params both exist and they are all numbers
-    console.log(urlParams);
     //if (urlParams && urlParams["JobWalltimeHours"] && urlParams["JobCores"] && urlParams["GrpCPURunMins"]) {
     if (urlParams) {
         var JobWalltimeHours = parseInt(urlParams["JobWalltimeHours"]) || '';
@@ -221,6 +259,82 @@ var urlParams;
         render(simulation, 0);
     }
 })();
+
+d3.select("#save8").on("click", saveAsSvg);
+
+function saveAsSvg() {
+//    var append = !svg.select("defs");
+//    var defs = append ? svg.append("defs") : svg.select("defs");
+//    var style = append ? defs.append("style") : defs.select("style");
+//    style.html(
+}
+
+d3.select("#save").on("click", function(){
+    var html = d3.select("svg")
+    .attr("version", 1.1)
+    .attr("xmlns", "http://www.w3.org/2000/svg")
+    .node().parentNode.innerHTML;
+
+    var imgsrc = 'data:image/svg+xml;base64,'+ btoa(html);
+    var img = '<img src="'+imgsrc+'">';
+    d3.select("#svgdataurl").html(img);
+
+//
+//    var canvas = document.querySelector("canvas"),
+
+    var canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 500;
+    context = canvas.getContext("2d");
+
+    var image = new Image;
+    image.src = imgsrc;
+    image.onload = function() {
+        context.drawImage(image, 0, 0);
+
+        var canvasdata = canvas.toDataURL("image/png");
+
+        var pngimg = '<img src="'+canvasdata+'">';
+        d3.select("#pngdataurl").html(pngimg);
+
+        var a = document.createElement("a");
+        a.download = "sample.png";
+        a.href = canvasdata;
+        a.click();
+    };
+ 
+});
+
+function saveAsImg() {
+//    var canvas = document.createElement("canvas");
+//    canvas.width = 1080;
+//    canvas.height = 500;
+//    var canvas = document.getElementById("save_image");
+
+    var canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 500;
+    var ctx    = canvas.getContext('2d');
+
+    var data   = document.getElementById("graph").innerHTML;
+
+    var DOMURL = window.URL || window.webkitURL || window;
+
+    var img = new Image();
+    var svg = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
+    var url = DOMURL.createObjectURL(svg);
+
+    img.onload = function () {
+      ctx.drawImage(img, 0, 0);
+        var canvasdata = canvas.toDataURL("image/png");
+    var pngimg = '<img src="'+canvasdata+'">';
+    d3.select("#pngdataurl").html(pngimg);
+//      DOMURL.revokeObjectURL(url);
+    };
+
+    img.src = url;
+//    window.location = canvas.toDataURL("image/png");
+}
 </script>
 </body>
 </html>
