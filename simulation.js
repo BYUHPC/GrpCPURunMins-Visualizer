@@ -12,10 +12,101 @@ Fsl.CpuTimeRemaining.Job = function(walltime, cores) {
   this.cpu_time = cores * walltime;
 };
 
+
+Fsl.CpuTimeRemaining.Form = function(id, color, renderer) {
+
+  this.html_id = 'simulation' + id;
+  this.id = id;
+  this.color = color;
+
+  this.attach = function(to) {
+    var previous = this.form.lastChild;
+    to.appendChild(this.form);
+    //if (!form.nextSibling) {
+      //previous.appendChild(this.createButton('+', 'inc', function() {
+        
+      //}));
+    //}
+    //if (form.previousSibling) {
+      //previous.appendChild(this.createButton('-', 'dec', removeForm);
+    //}
+
+  }
+
+  this.detach = function() {
+    this.form.parentNode.removeChild(this.form);
+  }
+
+  // private
+
+  function createInputWithLabel(name, description, required) {
+    var input = document.createElement('input');
+    input.setAttribute('name', name);
+    input.setAttribute('size', 8);
+    input.setAttribute('type', 'text');
+    if (required) {
+      input.setAttribute('required', '');
+    }
+
+    var label = document.createElement('label');
+    label.appendChild(document.createTextNode(description));
+    label.appendChild(input);
+    return label;
+  }
+
+  this.createButton = function(value, button_class, listener) {
+    var button = document.createElement('button');
+    button.classList.add(button_class);
+    button.appendChild(document.createTextNode(value));
+    button.addEventListener('click', listener);
+    return button;
+  } 
+
+  this.createForm = function() {
+    var form = document.createElement('form');
+    form.setAttribute('id', this.html_id);
+    form.classList.add(color);
+
+    var fieldset = document.createElement('fieldset');
+    var legend = document.createElement('legend');
+    legend.appendChild(document.createTextNode('Simulation #' + id));
+    fieldset.appendChild(legend);
+    fieldset.appendChild(createInputWithLabel('JobWalltimeHours', 'Job Walltime (hours)', true));
+    fieldset.appendChild(createInputWithLabel('JobCores', 'Cores per job', true));
+    fieldset.appendChild(createInputWithLabel('GrpCPURunMins', 'Group CPU Run Mins', true));
+    fieldset.appendChild(createInputWithLabel('jobs', 'Jobs', false));
+
+    var submit = document.createElement('button');
+    submit.setAttribute('form', this.html_id);
+    submit.setAttribute('type', 'submit');
+    submit.appendChild(document.createTextNode('Update Chart'));
+
+    var formadd = document.createElement('span');
+    formadd.setAttribute('id', 'formadd' + id);
+    formadd.classList.add('formadd');
+
+    form.appendChild(fieldset);
+    form.appendChild(submit);
+    form.appendChild(formadd);
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      renderer(form, id);
+    });
+
+    return form;
+  }
+
+  this.form = this.createForm();
+
+}
+
+
 Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run = function(walltime, cores, GRPCpuRunHrs) {
   var MAGIC_CONSTANT = 5; 
   return GRPCpuRunHrs / (walltime / 2 ) / cores * MAGIC_CONSTANT;
 };
+
 
 /**
  * This class implements the ECMAScript 6 protocol for iterators, as 

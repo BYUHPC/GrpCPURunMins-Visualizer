@@ -193,7 +193,7 @@ function redraw() {
     // need to remove them all and redraw them with the new scale
     svg.selectAll("path.line")
          .remove();
-    for (var i = 0; i < next_form_id; i++) {
+    for (var i = 0; i <= max_form_id; i++) {
         svg.append("path")
              .datum(line_data[i])
              .attr("class", "line " + chart_colors_class[i])
@@ -242,6 +242,11 @@ var urlParams;
 })();
 (function(){
     redrawTicks();
+    
+    var form = new Fsl.CpuTimeRemaining.Form(0, 'blue', render);
+    form.attach(document.getElementById('formset'));
+    next_form_id++;
+    return;
     addForm();
     // verify that all the url params both exist and they are all numbers
     console.log(urlParams);
