@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>SLURM GrpCpuRunMins Simulation</title>
+  <meta charset="utf-8" />
   <link rel="stylesheet" type="text/css" href="simulation.css">
 </head>
 
@@ -10,25 +11,18 @@
   <script src="./simulation.js"></script>
   
 <div id="formset" class="formset"></div>
+<button id="saveSVG">Download Graph</button>
+<div id="loading" class="loading-spinner">
+  <p><img src="/css/nova/simulation/ajax-loader.gif" /> Please Wait</p>
+</div>
 <div id="graph">
 <svg xmlns="http://www.w3.org/2000/svg">
 <rect width="100%" height="100%" fill="white"></rect>
 <defs><style type="text/css">
-.axis path {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-.axis line {
-  fill: none;
-  stroke: lightgrey;
-  shape-rendering: crispEdges;
-  opacity: 0.7;
-}
-
+<![CDATA[
 .line {
   fill: none;
-  stroke-width: 1.5px;
+  stroke-width: 2.5px;
 }
 
 .red {
@@ -42,16 +36,9 @@
 .green {
   stroke: green;
 }
+]]>
 </style></defs>
 </svg></div>
-<div id="loading" class="loading-spinner">
-  <p><img src="/css/nova/simulation/ajax-loader.gif" /> Please Wait</p>
-</div>
-<button id="save">Save 1</button>
-<button id="save8">Save 8</button>
-<button onclick="saveAsImg();">Save 2</button>
-<div id="svgdataurl"></div>
-<div id="pngdataurl"></div>
 <script>
 
 var margin = {top: 20, right: 20, bottom: 30, left: 100},
@@ -94,7 +81,7 @@ dec_button.appendChild(document.createTextNode('-'));
 dec_button.addEventListener('click', removeForm);
 
 // want more comparisons? add more colors to this spot
-var chart_colors_class = ["blue", "red", "green"];
+var chart_colors_class = ["blue", "red", "green", "purple"];
 var max_forms = chart_colors_class.length;
 var max_form_id = max_forms - 1;
 
@@ -120,7 +107,6 @@ function removeForm() {
     redraw();
 }
 
-
 function createInputWithLabel(name, description, required) {
   var input = document.createElement('input');
   input.setAttribute('name', name);
@@ -128,10 +114,56 @@ function createInputWithLabel(name, description, required) {
   input.setAttribute('type', 'text');
   if (required) {
     input.setAttribute('required', '');
+    // setup custom validation on the input fields
+    input.oninvalid = function(e) {
+      e.target.setCustomValidity("");
+      if (!e.target.validity.valid) {
+        e.target.setCustomValidity("");
+      }
+    };
+    input.oninput = function(e) {
+      e.target.setCustomValidity("");
+    };
   }
-
+  
   var label = document.createElement('label');
   label.appendChild(document.createTextNode(description));
+  if (name === "JobWalltimeHours") {
+    var select_box = document.createElement('select');
+    select_box.setAttribute('name', 'JobWalltimeUnits');
+    var select_days = document.createElement("option");
+    select_days.setAttribute("value", "days");
+    select_days.innerHTML = "Days";
+    var select_hours = document.createElement("option");
+    select_hours.setAttribute("value", "hours");
+    select_hours.innerHTML = "Hours";
+    var select_mins = document.createElement("option");
+    select_mins.setAttribute("value", "mins");
+    select_mins.innerHTML = "Minutes";
+    select_box.appendChild(select_days);
+    select_box.appendChild(select_hours);
+    select_box.appendChild(select_mins);
+    //the first form should have an usable select box, and all the other forms should
+    //match whatever they choose since it would make sens eto compare different
+    //units on the x axis to begin with.
+    if (next_form_id === 0) {
+      // add a listener to this select to update all the text versions of this select
+      select_box.onchange = function(e) {
+        var elements = document.getElementsByName("JobWalltimeUnits");
+        for (var i=0; i < elements.length; ++i) {
+          elements[i].selectedIndex = e.target.options.selectedIndex;
+        }
+      };
+    } else {
+      select_box.disabled = true;
+      select_box.setAttribute("name", "JobWalltimeUnits");
+      var select_unit = document.getElementById("simulation0").JobWalltimeUnits;
+      select_box.selectedIndex = select_unit.options.selectedIndex;
+    }
+    label.appendChild(select_box);
+    // make the label choose the input field instead of the select box
+    label.setAttribute("for", "JobWalltimeHours");
+  }
   label.appendChild(input);
   return label;
 }
@@ -146,10 +178,13 @@ function createForm(id, color) {
   var legend = document.createElement('legend');
   legend.appendChild(document.createTextNode('Simulation #' + id));
   fieldset.appendChild(legend);
-  fieldset.appendChild(createInputWithLabel('JobWalltimeHours', 'Job Walltime (hours)', true));
-  fieldset.appendChild(createInputWithLabel('JobCores', 'Cores per job', true));
-  fieldset.appendChild(createInputWithLabel('GrpCPURunMins', 'Group CPU Run Mins', true));
-  fieldset.appendChild(createInputWithLabel('jobs', 'Jobs', false));
+  fieldset.appendChild(createInputWithLabel('JobWalltimeHours', 'Job Walltime ', true));
+  fieldset.appendChild(createInputWithLabel('JobCores', 'Cores per job ', true));
+  fieldset.appendChild(createInputWithLabel('GrpCPURunMins', 'Group CPU Run Mins ', true));
+  var jobs_field = fieldset.appendChild(createInputWithLabel('jobs', 'Jobs ', false));
+  // hide the jobs field 
+  // TODO make a separate button to reveal this field
+  jobs_field.style.display = "none";
 
   var submit = document.createElement('button');
   submit.setAttribute('form', name);
@@ -192,32 +227,56 @@ function addForm() {
     addFormButtons(next_form_id++);
 }
 
-var history_cache = {};
+// TODO if performance becomes an issue, cache previous graph results
+//var history_cache = {};
+
+// line data holds the data for each of the current graphs drawn so it doesn't 
+// have to recalculate if the user changes only one graph
 var line_data = new Array(max_forms);
 for (var i = 0; i < max_forms; i++) {
   line_data[i] = [];
 }
 function render(form, id) {
-    // TODO: Hide the jobs field and compute it unless they check the advanced buttons
+    // TODO: Hide the jobs field and compute it (DONE) unless they check the advanced buttons (NOT DONE)
     // TODO: Cache the results for previous histories
-    
     var data = [];
     var JobWalltime = form.JobWalltimeHours.value;
     var JobCores = form.JobCores.value;
-    var GrpCPURunHrs = form.GrpCPURunMins.value;
-    var jobs = Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run(JobWalltime, JobCores, GrpCPURunHrs);
-    var simulation = new Fsl.CpuTimeRemaining.Simulation(JobWalltime, JobCores, jobs, GrpCPURunHrs);
+    var GrpCPURunMins = form.GrpCPURunMins.value;
+    var JobWalltimeUnits = form.JobWalltimeUnits.value;
+    // convert the JobWalltime to minutes
+    if (JobWalltimeUnits === "days") {
+        JobWalltime *= 60 * 24;
+    } else if (JobWalltimeUnits === "hours") {
+        JobWalltime *= 60;
+    } // else its minutes so we don't need to convert
+        
+    // sanity check, if the GrpCPURunMins < Job Cores * Job Walltime, then a job can never start so it will never finish
+    if (GrpCPURunMins < JobCores * JobWalltime) {
+        
+    }
+    
+    var jobs = Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run(JobWalltime, JobCores, GrpCPURunMins);
+    var simulation = new Fsl.CpuTimeRemaining.Simulation(JobWalltime, JobCores, jobs, GrpCPURunMins);
     for (var n = simulation.next(); !n.done; n = simulation.next()) {
       data.push(n.value);
     }
-    //console.log(JobWalltime + " " + JobCores + " " + GrpCPURunHrs + " " +data);
     line_data[id] = data;
     redraw();
 }
 function redraw() {
     // determine the x and y min max by finding the biggest x and biggest y in all the lines
     var x_max = d3.max(line_data, function(line) {
-            return line.length-1;
+            // convert the x axis to use the proper units
+            var JobWalltimeUnits = document.getElementById("simulation0").JobWalltimeUnits.value;
+            var t = line.length-1;
+            if (JobWalltimeUnits === "days") {
+                return t / 60.0 / 24.0;
+            } else if (JobWalltimeUnits === "hours") {
+                return t / 60.0;
+            } else {
+                return t;
+            }
         }) || 1.0;
     x.domain([0, x_max]);
     var y_max = d3.max(line_data, function(line) {
@@ -237,8 +296,12 @@ function redraw() {
 }
      
 function redrawTicks() {
+    // clear the previous axis
     svg.selectAll("g.x.axis").remove();
     svg.selectAll("g.y.axis").remove();
+    // redraw the new axis according to the right scale
+    // also get the current units
+    var time_units = document.getElementById("simulation0").JobWalltimeUnits;
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
@@ -248,7 +311,7 @@ function redrawTicks() {
             .attr("dx", ".71em")
             .style("text-anchor", "start")
             .attr("y", -6)
-            .text("Hours");
+            .text(time_units.options[time_units.selectedIndex].innerHTML);
     svg.append("g")         
         .attr("class", "y axis")
         .call(yAxis.ticks(10)
@@ -259,6 +322,31 @@ function redrawTicks() {
             .attr("dy", ".71em")
             .style("text-anchor", "end")
             .text("Cores");
+    // This is a fix for desktop renderers that don't support css. we can inline all
+    // the css as line attributes 
+    svg.selectAll("g.x.axis line").attr({
+            "fill" : "none",
+            "shape-rendering" : "crispEdges",
+            "stroke" : "lightgrey",
+            "stroke-width" : "1px",
+            "style" : "opacity: 0.7"
+        });
+    svg.selectAll("g.y.axis line").attr({
+            "fill" : "none",
+            "shape-rendering" : "crispEdges",
+            "stroke" : "lightgrey",
+            "stroke-width" : "1px",
+            "style" : "opacity: 0.7"
+        });
+    // recolor the labelled axis lines 
+    svg.select("g.x.axis path").attr({
+                "stroke": "black",
+                "stroke-width": "1px"
+            });
+    svg.select("g.y.axis path").attr({
+                "stroke": "black",
+                "stroke-width": "1px"
+            });
 }
 
 // parse any query string params and if they are all there then we can fill in the
@@ -276,8 +364,9 @@ var urlParams;
        urlParams[decode(match[1])] = decode(match[2]);
 })();
 (function(){
-    redrawTicks();
     addForm();
+    redrawTicks();
+    
     // verify that all the url params both exist and they are all numbers
     //if (urlParams && urlParams["JobWalltimeHours"] && urlParams["JobCores"] && urlParams["GrpCPURunMins"]) {
     if (urlParams) {
@@ -295,81 +384,23 @@ var urlParams;
     }
 })();
 
-d3.select("#save8").on("click", saveAsSvg);
+d3.select("#saveSVG").on("click", saveAsSvg);
 
 function saveAsSvg() {
-//    var append = !svg.select("defs");
-//    var defs = append ? svg.append("defs") : svg.select("defs");
-//    var style = append ? defs.append("style") : defs.select("style");
-//    style.html(
+    var html = document.getElementById("graph").innerHTML;
+    var a = document.createElement("a");
+    var datauri = "data:image/svg+xml;base64," + btoa(html);
+    a.download = "graph.svg";
+    a.href = datauri;
+    // firefox didn't like the obvious a.click() so this is a workaround that seems to work
+    var clickEvent = new MouseEvent("click", {
+        "view": window,
+        "bubbles": true,
+        "cancelable": false
+    });
+    a.dispatchEvent(clickEvent);
 }
 
-d3.select("#save").on("click", function(){
-    var html = d3.select("svg")
-    .attr("version", 1.1)
-    .attr("xmlns", "http://www.w3.org/2000/svg")
-    .node().parentNode.innerHTML;
-
-    var imgsrc = 'data:image/svg+xml;base64,'+ btoa(html);
-    var img = '<img src="'+imgsrc+'">';
-    d3.select("#svgdataurl").html(img);
-
-//
-//    var canvas = document.querySelector("canvas"),
-
-    var canvas = document.createElement("canvas");
-    canvas.width = 1080;
-    canvas.height = 500;
-    context = canvas.getContext("2d");
-
-    var image = new Image;
-    image.src = imgsrc;
-    image.onload = function() {
-        context.drawImage(image, 0, 0);
-
-        var canvasdata = canvas.toDataURL("image/png");
-
-        var pngimg = '<img src="'+canvasdata+'">';
-        d3.select("#pngdataurl").html(pngimg);
-
-        var a = document.createElement("a");
-        a.download = "sample.png";
-        a.href = canvasdata;
-        a.click();
-    };
- 
-});
-
-function saveAsImg() {
-//    var canvas = document.createElement("canvas");
-//    canvas.width = 1080;
-//    canvas.height = 500;
-//    var canvas = document.getElementById("save_image");
-
-    var canvas = document.createElement("canvas");
-    canvas.width = 1080;
-    canvas.height = 500;
-    var ctx    = canvas.getContext('2d');
-
-    var data   = document.getElementById("graph").innerHTML;
-
-    var DOMURL = window.URL || window.webkitURL || window;
-
-    var img = new Image();
-    var svg = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
-    var url = DOMURL.createObjectURL(svg);
-
-    img.onload = function () {
-      ctx.drawImage(img, 0, 0);
-        var canvasdata = canvas.toDataURL("image/png");
-    var pngimg = '<img src="'+canvasdata+'">';
-    d3.select("#pngdataurl").html(pngimg);
-//      DOMURL.revokeObjectURL(url);
-    };
-
-    img.src = url;
-//    window.location = canvas.toDataURL("image/png");
-}
 </script>
 </body>
 </html>

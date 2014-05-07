@@ -4,6 +4,7 @@ require_once("setup.php");
 requireAdmin();
 
 $template = new Fsl\Template(array('loadJsAtTop' => true));
+//var_dump( $_SESSION);
 ob_start(); 
 ?>
 
