@@ -137,12 +137,9 @@ function createInputWithLabel(name, description, required) {
     var select_hours = document.createElement("option");
     select_hours.setAttribute("value", "hours");
     select_hours.innerHTML = "Hours";
-    var select_mins = document.createElement("option");
-    select_mins.setAttribute("value", "mins");
-    select_mins.innerHTML = "Minutes";
-    select_box.appendChild(select_days);
+    // apparently minutes is too fine grained to be useful so I removed it
     select_box.appendChild(select_hours);
-    select_box.appendChild(select_mins);
+    select_box.appendChild(select_days);
     //the first form should have an usable select box, and all the other forms should
     //match whatever they choose since it would make sens eto compare different
     //units on the x axis to begin with.
@@ -244,20 +241,23 @@ function render(form, id) {
     var JobCores = form.JobCores.value;
     var GrpCPURunMins = form.GrpCPURunMins.value;
     var JobWalltimeUnits = form.JobWalltimeUnits.value;
-    // convert the JobWalltime to minutes
+    // convert the JobWalltime to hours
     if (JobWalltimeUnits === "days") {
-        JobWalltime *= 60 * 24;
-    } else if (JobWalltimeUnits === "hours") {
-        JobWalltime *= 60;
-    } // else its minutes so we don't need to convert
+        JobWalltime *= 24;
+    }
+    // convert the GrpCPURunMins to hours as well
+    var GrpCPURunHrs = Math.floor(GrpCPURunMins / 60);
         
     // sanity check, if the GrpCPURunMins < Job Cores * Job Walltime, then a job can never start so it will never finish
-    if (GrpCPURunMins < JobCores * JobWalltime) {
-        
+    if (GrpCPURunHrs < JobCores * JobWalltime) {
+        form.GrpCPURunMins.validity.valid = false;
+        form.GrpCPURunMins.setCustomValidity("");
+        form.GrpCPURunMins.setCustomValidity("The GrpCPURunMins cannot be less than Job Cores * Job Walltime");
+        return;
     }
     
-    var jobs = Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run(JobWalltime, JobCores, GrpCPURunMins);
-    var simulation = new Fsl.CpuTimeRemaining.Simulation(JobWalltime, JobCores, jobs, GrpCPURunMins);
+    var jobs = Fsl.CpuTimeRemaining.calculate_number_of_jobs_to_run(JobWalltime, JobCores, GrpCPURunHrs);
+    var simulation = new Fsl.CpuTimeRemaining.Simulation(JobWalltime, JobCores, jobs, GrpCPURunHrs);
     for (var n = simulation.next(); !n.done; n = simulation.next()) {
       data.push(n.value);
     }
@@ -267,16 +267,7 @@ function render(form, id) {
 function redraw() {
     // determine the x and y min max by finding the biggest x and biggest y in all the lines
     var x_max = d3.max(line_data, function(line) {
-            // convert the x axis to use the proper units
-            var JobWalltimeUnits = document.getElementById("simulation0").JobWalltimeUnits.value;
-            var t = line.length-1;
-            if (JobWalltimeUnits === "days") {
-                return t / 60.0 / 24.0;
-            } else if (JobWalltimeUnits === "hours") {
-                return t / 60.0;
-            } else {
-                return t;
-            }
+            return line.length-1;
         }) || 1.0;
     x.domain([0, x_max]);
     var y_max = d3.max(line_data, function(line) {
@@ -347,6 +338,15 @@ function redrawTicks() {
                 "stroke": "black",
                 "stroke-width": "1px"
             });
+    // rewrite the text of the x axis values if the data is to be displayed in days
+    if (time_units.value === "days") {
+        svg.selectAll("g.x.axis text").text(function (d) {
+            if (d === undefined) { 
+                return "Days";
+            }
+            return (parseFloat(d) / 24.0).toFixed(2);
+        });
+    }
 }
 
 // parse any query string params and if they are all there then we can fill in the
