@@ -84,11 +84,11 @@ var max_form_id = max_forms - 1;
 
 function addFormButtons(id) {
     var formadd = document.getElementById('formadd' + id);
-    if (id < max_form_id) {
-        formadd.appendChild(inc_button);
-    }
     if (id > 0) {
         formadd.appendChild(dec_button);
+    }
+    if (id < max_form_id) {
+        formadd.appendChild(inc_button);
     }
 }
 
