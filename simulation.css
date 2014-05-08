@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2014, Brigham Young University
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #formset form {
   border: 2.5px solid;
   border-radius: .5rem;
@@ -37,5 +54,28 @@
   width:3em;
 }
 
-#formset label {width:320px; height: 30px; display:block;}
+#formset label {width:340px; height: 30px; display:block;}
 #formset input {float:right; clear:both;}
+
+.help_parent .hover_popup {
+  display: none;
+  position: absolute; 
+  color: black; 
+  background: white; 
+  padding: 5px;
+  border: 1px solid;
+  border-radius: .5rem;
+}
+
+.help_parent {
+  position: relative;
+}
+
+.help_parent:hover .hover_popup {
+  display: block;
+  width: 600px;
+}
+
+.hover_popup {
+  display: none;
+}
