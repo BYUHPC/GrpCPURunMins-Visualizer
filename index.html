@@ -81,7 +81,7 @@ dec_button.appendChild(document.createTextNode('-'));
 dec_button.addEventListener('click', removeForm);
 
 // want more comparisons? add more colors to this spot
-var chart_colors_class = ["blue", "red", "green", "purple"];
+var chart_colors_class = ["blue", "red", "green"];
 var max_forms = chart_colors_class.length;
 var max_form_id = max_forms - 1;
 
@@ -292,7 +292,7 @@ function redrawTicks() {
     svg.selectAll("g.y.axis").remove();
     // redraw the new axis according to the right scale
     // also get the current units
-    var time_units = document.getElementById("simulation0").JobWalltimeUnits;
+//    var time_units = document.getElementById("simulation0").JobWalltimeUnits;
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
@@ -302,7 +302,7 @@ function redrawTicks() {
             .attr("dx", ".71em")
             .style("text-anchor", "start")
             .attr("y", -6)
-            .text(time_units.options[time_units.selectedIndex].innerHTML);
+            .text("Hours");
     svg.append("g")         
         .attr("class", "y axis")
         .call(yAxis.ticks(10)
@@ -339,14 +339,14 @@ function redrawTicks() {
                 "stroke-width": "1px"
             });
     // rewrite the text of the x axis values if the data is to be displayed in days
-    if (time_units.value === "days") {
-        svg.selectAll("g.x.axis text").text(function (d) {
-            if (d === undefined) { 
-                return "Days";
-            }
-            return (parseFloat(d) / 24.0).toFixed(2);
-        });
-    }
+//    if (time_units.value === "days") {
+//        svg.selectAll("g.x.axis text").text(function (d) {
+//            if (d === undefined) { 
+//                return "Days";
+//            }
+//            return (parseFloat(d) / 24.0).toFixed(2);
+//        });
+//    }
 }
 
 // parse any query string params and if they are all there then we can fill in the
