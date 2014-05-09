@@ -78,6 +78,15 @@ do *not* need to adjust this number.
 </style></defs>
 </svg></div>
 
+<p>
+  The simulation assumes infinite resources and no contention from other users (i.e. your numbers may result in 100x the usage that is possible with the available hardware).  There are four main features to note:
+<ol>
+  <li><b>The number of cores started at time 0</b> is the number of cores that start immediately before hitting the limit.  It is equal to GrpCPURunMins / walltime_mins.</li>
+  <li><b>The peak</b> is what happens when your initial jobs are all have a remaining time of a few seconds.  Their cores*remaining_time number is now almost zero, so they are not replaced by many jobs once they complete.</li>
+  <li><b>The plateau</b> is what happens when job start times are sufficiently staggered.  The plateau is where your usage will stabilize over time.</li>
+  <li><b>The tail off</b> shows how quickly your usage will drop when higher priority users submit jobs or you run out of queued jobs.  This shows how quickly you can free up your resources.  The steeper this slope across all users, the lower the average queue time will be.</li>
+</ol>
+</p>
 <!-- simple handler to add a save as svg button -->
 <script> 
     d3.select("#saveSVG").on("click", saveAsSvg);
