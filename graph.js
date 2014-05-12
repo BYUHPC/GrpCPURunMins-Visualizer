@@ -173,7 +173,7 @@ function createForm(id, color) {
   fieldset.appendChild(legend);
   fieldset.appendChild(createInputWithLabel('JobWalltimeHours', 'Job Walltime ', true));
   fieldset.appendChild(createInputWithLabel('JobCores', 'Cores per job ', true));
-  fieldset.appendChild(createInputWithLabel('GrpCPURunMins', 'Group CPU Run Mins ', true));
+  fieldset.appendChild(createInputWithLabel('GrpCPURunMins', 'GrpCPURunMins Limit ', true));
   var jobs_field = fieldset.appendChild(createInputWithLabel('jobs', 'Jobs ', false));
   // hide the jobs field 
   // TODO make a separate button to reveal this field
