@@ -94,15 +94,20 @@ function createInputWithLabel(name, description, required) {
   if (required) {
     input.setAttribute('required', '');
     // setup custom validation on the input fields
-    input.oninvalid = function(e) {
-      e.target.setCustomValidity("");
-      if (!e.target.validity.valid) {
-        e.target.setCustomValidity("");
-      }
-    };
     input.oninput = function(e) {
-      e.target.setCustomValidity("");
+        if (isNaN(e.target.value)) {
+            e.target.setCustomValidity("Numbers only, please.");
+        } else {
+            e.target.setCustomValidity("");
+        }
     };
+    input.onblur = function(e) {
+        if (isNaN(e.target.value)) {
+            e.target.setCustomValidity("Numbers only, please.");
+        } else {
+            e.target.setCustomValidity("");
+        }
+    }
   }
   
   var label = document.createElement('label');
@@ -250,8 +255,6 @@ function render(form, id) {
         
     // sanity check, if the GrpCPURunMins < Job Cores * Job Walltime, then a job can never start so it will never finish
     if (GrpCPURunHrs < JobCores * JobWalltime) {
-        form.GrpCPURunMins.validity.valid = false;
-        form.GrpCPURunMins.setCustomValidity("");
         form.GrpCPURunMins.setCustomValidity("The GrpCPURunMins cannot be less than Job Cores * Job Walltime");
         return;
     }
