@@ -44,7 +44,7 @@ This code is used as an example style sheet and is open in the Public Domain
 }
 
 #formset label {width:340px; height: 30px; display:block;}
-#formset input {float:right; clear:both;}
+#formset input {float:right; clear:both; width: 35%;}
 
 .help_parent .hover_popup {
   display: none;

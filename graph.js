@@ -86,7 +86,7 @@ function createInputWithLabel(name, description, required) {
   var input = document.createElement('input');
   input.setAttribute('name', name);
   input.setAttribute('size', 8);
-  input.setAttribute('type', 'text');
+  input.setAttribute('type', 'number');
   // add a default value for GrpCPURunMins if one exists
   if (name === "GrpCPURunMins") {
       input.setAttribute("value", document.getElementById("defaultGrpCPURunMins").innerHTML);
@@ -94,20 +94,7 @@ function createInputWithLabel(name, description, required) {
   if (required) {
     input.setAttribute('required', '');
     // setup custom validation on the input fields
-    input.oninput = function(e) {
-        if (isNaN(e.target.value)) {
-            e.target.setCustomValidity("Numbers only, please.");
-        } else {
-            e.target.setCustomValidity("");
-        }
-    };
-    input.onblur = function(e) {
-        if (isNaN(e.target.value)) {
-            e.target.setCustomValidity("Numbers only, please.");
-        } else {
-            e.target.setCustomValidity("");
-        }
-    }
+    input.oninput = sanityCheck;
   }
   
   var label = document.createElement('label');
@@ -223,6 +210,48 @@ function addForm() {
     }
     // add form buttons to the new form
     addFormButtons(next_form_id++);
+}
+
+function sanityCheck() {
+    var JobWalltimeUnits, JobWalltimeHours, JobCores, GrpCPURunMins;
+    // fill the above variables with the correct DOM elements regardless of which triggered the event
+    var labels = this.parentNode.parentNode.childNodes;
+    for (i = 0; i < labels.length; i++) {
+        if (labels[i].hasChildNodes() && labels[i].lastChild.tagName == "INPUT" ) {
+            var input = labels[i].lastChild;
+            switch (input.getAttribute("name")) {
+                case "JobWalltimeHours":
+                    JobWalltimeHours = input;
+                    JobWalltimeUnits = input.previousSibling;
+                    break;
+                case "JobCores":
+                    JobCores = input;
+                    break;
+                case "GrpCPURunMins":
+                    GrpCPURunMins = input;
+                    break;
+            }
+        }
+    }
+
+    if (!JobWalltimeHours.value || !JobCores.value || !GrpCPURunMins.value) {
+        return false;
+    }
+    var JobWalltime = JobWalltimeHours.value;
+    var JobCores = JobCores.value;
+    // convert the JobWalltime to hours
+    if (JobWalltimeUnits.value === "days") {
+        JobWalltime *= 24;
+    }
+    // convert the GrpCPURunMins to hours as well
+    var GrpCPURunHrs = Math.floor(GrpCPURunMins.value / 60);
+
+    // sanity check, if the GrpCPURunMins < Job Cores * Job Walltime, then a job can never start so it will never finish
+    if (GrpCPURunHrs < JobCores * JobWalltime) {
+        GrpCPURunMins.setCustomValidity("The GrpCPURunMins cannot be less than Job Cores * Job Walltime");
+    } else {
+        GrpCPURunMins.setCustomValidity("");
+    }
 }
 
 // TODO if performance becomes an issue, cache previous graph results
