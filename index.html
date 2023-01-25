@@ -8,16 +8,9 @@ and is released under the Public Domain
 <head>
   <title>SLURM GrpCpuRunMins Simulation</title>
   <link rel="stylesheet" type="text/css" href="simulation.css">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3.min.js"></script>
+  <script src="/js/libs/d3.min.js"></script>
   <meta charset="utf-8" />
-  <script>
-  // want more comparisons? add more colors to this spot and then make a new css 
-  // class with that color (see the inline css in the svg and simulation.css)
-  var chart_colors_class = ["blue", "red", "green"];
-  var margin = {top: 20, right: 20, bottom: 30, left: 100},
-      width = 800 - margin.left - margin.right,
-      height = 500 - margin.top - margin.bottom;
-  </script>
+  <script src="./chart.js"></script>
   <script src="./graph.js"></script>
   <script src="./simulation.js"></script>
 </head>
@@ -88,8 +81,6 @@ do *not* need to adjust this number.
 </ol>
 </p>
 <!-- simple handler to add a save as svg button -->
-<script> 
-    d3.select("#saveSVG").on("click", saveAsSvg);
-</script>
+<script src="./svg.js"></script>
 </body>
 </html>
